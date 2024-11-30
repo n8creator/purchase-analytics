@@ -1,0 +1,86 @@
+  # producer:
+  #   build:
+  #     context: ./producer
+  #   volumes:
+  #     - ./producer:/app
+  #   ports:
+  #     - "8001:8000"
+  #   environment:
+  #     - DATABASE_URL=${DATABASE_URL}
+  #     - KAFKA_BROKER=${KAFKA_BROKER}
+  #   depends_on:
+  #     - db
+  #     - kafka
+
+  # consumer:
+  #   build:
+  #     context: ./consumer
+  #   volumes:
+  #     - ./consumer:/app
+  #   ports:
+  #     - "8002:8000"
+  #   environment:
+  #     - DATABASE_URL=${DATABASE_URL}
+  #     - KAFKA_BROKER=${KAFKA_BROKER}
+  #   depends_on:
+  #     - db
+  #     - kafka
+
+services:
+
+  db:
+    image: postgres:16
+    container_name: ${POSTGRES_HOSTNAME}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    container_name: pa_kafka
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9094
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+    volumes:
+      - kafka_data:/var/lib/kafka
+    ports:
+      - "9094:9094"
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    container_name: pa_zookeper
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: pa_kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9094
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    depends_on:
+      - kafka
+      - zookeeper
+
+volumes:
+  db_data:
+    name: purchase_analytics_db_data
+  kafka_data:
+    name: purchase_analytics_kafka_data
+  zookeeper_data:
+    name: purchase_analytics_zookeeper_data
