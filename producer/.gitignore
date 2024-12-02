@@ -1,0 +1,8 @@
+# Pytest files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Custom files
+tech_specs_*.md
+TODO.md

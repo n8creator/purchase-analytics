@@ -24,6 +24,10 @@ type-check:
 run:
 	@poetry run python manage.py runserver 0.0.0.0:9001
 
+# Test via pytest
+test:
+	pytest app/producer/tests -v --cov=app/producer --cov-report=html
+
 # System commands for Makefile
 MAKEFLAGS += --no-print-directory
 
